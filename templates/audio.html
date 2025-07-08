@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Recording - Dyslexia Detection</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Voice Recording Test</h1>
+            <p>Please read the following paragraph aloud while we record your voice</p>
+        </header>
+        
+        <main>
+            <div class="test-content">
+                <div class="reading-passage">
+                    <h3>Reading Passage:</h3>
+                    <p>
+                        The sun was shining brightly in the clear blue sky. Birds were singing cheerfully
+                        as they flew from tree to tree. A small brown rabbit hopped across the green grass,
+                        searching for food. Near a crystal-clear stream, a deer quietly drank water while
+                        keeping watch for any danger. The gentle breeze made the leaves rustle, creating
+                        a peaceful melody in the forest.
+                    </p>
+                </div>
+
+                <div class="recording-controls">
+                    <button id="startRecording" class="btn-primary">Start Recording</button>
+                    <button id="stopRecording" class="btn-secondary" disabled>Stop Recording</button>
+                    <div id="recordingStatus"></div>
+                    <div id="timer" class="hidden">00:00</div>
+                </div>
+                
+                <div id="audioPreview" class="hidden">
+                    <h3>Preview Recording</h3>
+                    <audio id="audioPlayer" controls></audio>
+                    <div class="button-group">
+                        <button id="reRecord" class="btn-secondary">Record Again</button>
+                        <button id="submitRecording" class="btn-primary">Submit Recording</button>
+                    </div>
+                </div>
+                
+                <div id="loading" class="hidden">
+                    <div class="spinner"></div>
+                    <p>Processing audio...</p>
+                </div>
+            </div>
+        </main>
+        
+        <div class="progress-indicator">
+            <div class="step completed">Eye Tracking</div>
+            <div class="step completed">Handwriting</div>
+            <div class="step active">Audio</div>
+            <div class="step">Results</div>
+        </div>
+    </div>
+
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+        let audioBlob;
+        let timerInterval;
+        let seconds = 0;
+        
+        const startRecordingBtn = document.getElementById('startRecording');
+        const stopRecordingBtn = document.getElementById('stopRecording');
+        const recordingStatus = document.getElementById('recordingStatus');
+        const audioPreview = document.getElementById('audioPreview');
+        const audioPlayer = document.getElementById('audioPlayer');
+        const reRecordBtn = document.getElementById('reRecord');
+        const submitRecordingBtn = document.getElementById('submitRecording');
+        const loading = document.getElementById('loading');
+        const timer = document.getElementById('timer');
+        
+        // Start recording
+        startRecordingBtn.addEventListener('click', async () => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+                
+                mediaRecorder.addEventListener('dataavailable', event => {
+                    audioChunks.push(event.data);
+                });
+                
+                mediaRecorder.addEventListener('stop', () => {
+                    audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    audioPlayer.src = audioUrl;
+                    
+                    audioPreview.classList.remove('hidden');
+                    startRecordingBtn.classList.add('hidden');
+                    stopRecordingBtn.classList.add('hidden');
+                    recordingStatus.textContent = '';
+                    timer.classList.add('hidden');
+                });
+                
+                mediaRecorder.start();
+                startRecordingBtn.disabled = true;
+                stopRecordingBtn.disabled = false;
+                recordingStatus.textContent = 'Recording...';
+                
+                // Start timer
+                seconds = 0;
+                timer.textContent = '00:00';
+                timer.classList.remove('hidden');
+                timerInterval = setInterval(updateTimer, 1000);
+                
+            } catch (err) {
+                console.error('Error accessing microphone:', err);
+                alert('Error accessing microphone. Please make sure your device has a microphone and you have granted permission to use it.');
+            }
+        });
+        
+        // Stop recording
+        stopRecordingBtn.addEventListener('click', () => {
+            mediaRecorder.stop();
+            clearInterval(timerInterval);
+            
+            // Stop all audio tracks
+            mediaRecorder.stream.getTracks().forEach(track => track.stop());
+        });
+        
+        // Record again
+        reRecordBtn.addEventListener('click', () => {
+            audioPreview.classList.add('hidden');
+            startRecordingBtn.classList.remove('hidden');
+            startRecordingBtn.disabled = false;
+        });
+        
+        // Update the submit recording event listener in audio.html
+        submitRecordingBtn.addEventListener('click', () => {
+            audioPreview.classList.add('hidden');
+            loading.classList.remove('hidden');
+            
+            const formData = new FormData();
+            formData.append('audio_data', audioBlob, 'recording.wav');
+            
+            fetch('/api/upload-audio', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Server error: ' + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                loading.classList.add('hidden');
+                
+                if (data.success) {
+                    window.location.href = data.redirect;
+                } else {
+                    console.error('Error processing audio:', data.error);
+                    alert('Error processing audio: ' + (data.error || 'Unknown error'));
+                    startRecordingBtn.classList.remove('hidden');
+                    startRecordingBtn.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error uploading audio:', error);
+                loading.classList.add('hidden');
+                
+                // Auto-proceed to results in case of error
+                alert('Audio processing encountered an error. Proceeding to results with estimated data.');
+                window.location.href = '/results';
+            });
+        });
+        
+        // Update timer function
+        function updateTimer() {
+            seconds++;
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            timer.textContent = `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+        }
+    </script>
+</body>
+</html>

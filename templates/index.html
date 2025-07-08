@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DyslexiaDetect - Early Detection System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('home') }}">DyslexiaDetect</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('home') }}">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('about') }}">About</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('how_it_works') }}">How It Works</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="hero-section text-center py-5">
+        <div class="container">
+            <h1 class="display-4 mb-4">Early Detection of Dyslexia</h1>
+            <h2 class="lead mb-4">Using Machine Learning and Multi-Modal Analysis</h2>
+            <a href="{{ url_for('start_assessment') }}" class="btn btn-primary btn-lg pulse-button">Start Detection</a>
+        </div>
+    </div>
+
+    <div class="container py-5">
+        <div class="row">
+            <div class="col-md-6">
+                <h2>What is Dyslexia?</h2>
+                <p>Dyslexia is a learning disorder characterized by difficulty reading due to problems identifying speech sounds and learning how they relate to letters and words. It affects areas of the brain that process language.</p>
+                <p>People with dyslexia have normal intelligence and usually have normal vision. Most children with dyslexia can succeed in school with tutoring or a specialized education program. Emotional support also plays an important role.</p>
+                
+                <h3 class="mt-4">Common Signs of Dyslexia:</h3>
+                <ul>
+                    <li>Late talking</li>
+                    <li>Learning new words slowly</li>
+                    <li>Problems forming words correctly</li>
+                    <li>Difficulty reading and writing</li>
+                    <li>Trouble understanding rapid instructions</li>
+                    <li>Problems remembering the sequence of things</li>
+                    <li>Difficulty seeing similarities and differences in letters and words</li>
+                </ul>
+            </div>
+            <div class="col-md-6">
+                <div class="card shadow-sm">
+                    <img src="{{ url_for('static', filename='images/dyslexia-illustration.jpg') }}" class="card-img-top" alt="Dyslexia Illustration">
+                    <div class="card-body">
+                        <h5 class="card-title">Early Detection Matters</h5>
+                        <p class="card-text">Early identification of dyslexia is crucial for effective intervention. Our multi-modal detection system analyzes eye movements, handwriting patterns, and speech characteristics to identify potential indicators of dyslexia.</p>
+                    </div>
+                </div>
+                
+                <div class="detection-methods mt-4">
+                    <h3>Our Detection Methods</h3>
+                    <div class="row g-3 mt-2">
+                        <div class="col-md-4">
+                            <div class="method-card text-center p-3 border rounded">
+                                <img src="{{ url_for('static', filename='images/eye-icon.png') }}" alt="Eye Tracking" class="method-icon mb-2">
+                                <h5>Eye Tracking</h5>
+                                <p class="small">Analyzes reading patterns and eye movements</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="method-card text-center p-3 border rounded">
+                                <img src="{{ url_for('static', filename='images/handwriting-icon.png') }}" alt="Handwriting Analysis" class="method-icon mb-2">
+                                <h5>Handwriting</h5>
+                                <p class="small">Examines writing patterns and characteristics</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="method-card text-center p-3 border rounded">
+                                <img src="{{ url_for('static', filename='images/audio-icon.png') }}" alt="Audio Processing" class="method-icon mb-2">
+                                <h5>Speech Analysis</h5>
+                                <p class="small">Detects patterns in speech and pronunciation</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="text-center mt-5">
+            <a href="{{ url_for('start_assessment') }}" class="btn btn-primary btn-lg">Begin Dyslexia Detection</a>
+        </div>
+    </div>
+    
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>DyslexiaDetect</h5>
+                    <p>An advanced machine learning system for early detection of dyslexia using multi-modal analysis.</p>
+                </div>
+                <div class="col-md-3">
+                    <h5>Links</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="{{ url_for('home') }}" class="text-white">Home</a></li>
+                        <li><a href="{{ url_for('about') }}" class="text-white">About</a></li>
+                        <li><a href="{{ url_for('how_it_works') }}" class="text-white">How It Works</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5>Resources</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-white">Dyslexia Research</a></li>
+                        <li><a href="#" class="text-white">Support Resources</a></li>
+                        <li><a href="#" class="text-white">Contact</a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr>
+            <div class="text-center">
+                <p class="mb-0">© 2025 DyslexiaDetect. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

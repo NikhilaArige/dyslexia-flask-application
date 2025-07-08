@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Recording - Dyslexia Detection</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Voice Recording Test</h1>
+            <p>Please read the following paragraph aloud while we record your voice</p>
+        </header>
+        
+        <main>
+            <div class="test-content">
+                <div class="reading-passage">
+                    <h3>Reading Passage:</h3>
+                    <p>
+                        The sun was shining brightly in the clear blue sky. Birds were singing cheerfully
+                        as they flew from tree to tree. A small brown rabbit hopped across the green grass,
+                        searching for food. Near a crystal-clear stream, a deer quietly drank water while
+                        keeping watch for any danger. The gentle breeze made the leaves rustle, creating
+                        a peaceful melody in the forest.
+                    </p>
+                </div>
+
+                <div class="recorder-container">
+                    <div id="controls">
+                        <button id="recordButton" class="btn-primary">Start Recording</button>
+                        <button id="stopButton" class="btn-secondary" disabled>Stop Recording</button>
+                    </div>
+                    
+                    <div id="recordings">
+                        <h3>Your Recording:</h3>
+                        <audio id="audioPlayback" controls style="display: none;"></audio>
+                    </div>
+                    
+                    <div id="timer">00:00</div>
+                    
+                    <div id="status-message"></div>
+                </div>
+
+                <div class="action-buttons">
+                    <button id="submitButton" class="btn-primary" disabled>Submit Recording</button>
+                </div>
+            </div>
+        </main>
+        
+        <div class="progress-indicator">
+            <div class="step completed">Eye Tracking</div>
+            <div class="step completed">Handwriting</div>
+            <div class="step active">Audio</div>
+            <div class="step">Results</div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/audio-recorder.js') }}"></script>
+</body>
+</html>

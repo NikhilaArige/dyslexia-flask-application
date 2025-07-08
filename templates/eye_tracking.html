@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eye Tracking Test - DyslexiaDetect</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        #reading-test {
+            font-size: 1.2rem;
+            line-height: 1.8;
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: left;
+        }
+        
+        #calibration-area {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            background-color: #f8f9fa;
+            margin-bottom: 20px;
+        }
+        
+        #calibration-point {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: red;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .steps-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+        
+        .step {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            position: relative;
+        }
+        
+        .step.active {
+            font-weight: bold;
+            color: #0d6efd;
+        }
+        
+        .step:not(:last-child):after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            right: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #dee2e6;
+            transform: translateY(-50%);
+            z-index: -1;
+        }
+        
+        .step-number {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            line-height: 30px;
+            text-align: center;
+            border-radius: 50%;
+            background-color: #e9ecef;
+            margin-bottom: 5px;
+        }
+        
+        .step.active .step-number {
+            background-color: #0d6efd;
+            color: white;
+        }
+        
+        #webcam-container {
+            width: 640px;
+            height: 480px;
+            margin: 0 auto;
+            border: 2px solid #dee2e6;
+            position: relative;
+        }
+        
+        #webcam {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .overlay-markers {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('home') }}">DyslexiaDetect</a>
+            <div class="ms-auto">
+                <span class="navbar-text text-white">
+                    Step 1 of 3: Eye Movement Analysis
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-5">
+        <div class="steps-indicator">
+            <div class="step active">
+                <div class="step-number">1</div>
+                <div>Eye Tracking</div>
+            </div>
+            <div class="step">
+                <div class="step-number">2</div>
+                <div>Handwriting</div>
+            </div>
+            <div class="step">
+                <div class="step-number">3</div>
+                <div>Speech</div>
+            </div>
+            <div class="step">
+                <div class="step-number">4</div>
+                <div>Results</div>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h1 class="card-title text-center mb-4">Eye Movement Analysis</h1>
+                
+                <div id="setup-instructions" class="text-center mb-4">
+                    <p class="lead">This test will analyze your eye movements while reading to detect potential indicators of dyslexia.</p>
+                    <div class="alert alert-info">
+                        <strong>Important:</strong> Please ensure you're in a well-lit room and position yourself approximately 50-60 cm from your screen.
+                    </div>
+                    <button id="start-setup" class="btn btn-primary">Start Camera Setup</button>
+                </div>
+                
+                <div id="camera-setup" class="text-center mb-4" style="display:none;">
+                    <h3 class="mb-3">Camera Setup</h3>
+                    <div id="webcam-container">
+                        <video id="webcam" autoplay playsinline></video>
+                        <div class="overlay-markers" id="markers"></div>
+                    </div>
+                    <div class="mt-3">
+                        <p id="calibration-instruction">Please position your face so it fits within the frame</p>
+                        <button id="start-calibration" class="btn btn-primary" disabled>Begin Calibration</button>
+                    </div>
+                </div>
+                
+                <div id="calibration" style="display:none;">
+                    <h3 class="text-center mb-3">Eye Calibration</h3>
+                    <p class="text-center">Please follow the red dot with your eyes without moving your head.</p>
+                    <div id="calibration-area">
+                        <div id="calibration-point"></div>
+                    </div>
+                    <div class="progress mb-3">
+                        <div id="calibration-progress" class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                    </div>
+                </div>
+                
+                <div id="reading-test-container" style="display:none;">
+                    <h3 class="text-center mb-4">Reading Test</h3>
+                    <p class="text-center mb-3">Please read the following text aloud at your normal reading pace.</p>
+                    
+                    <div id="reading-test" class="border p-4 mb-4">
+                        <p>The sun was setting behind the mountains, casting long shadows across the valley. A gentle breeze rustled through the leaves of the old oak tree. Birds were returning to their nests, chirping softly as twilight approached.</p>
+                        <p>The small cottage stood at the edge of the forest, its windows glowing with warm light. Inside, a family gathered around the dinner table, sharing stories of their day. The aroma of freshly baked bread filled the air.</p>
+                        <p>Outside, the stars began to appear one by one in the darkening sky. The moon rose slowly, illuminating the landscape with its silver glow. A fox darted across the meadow, disappearing into the underbrush.</p>
+                        <p>As night fell, the sounds of the day faded into silence. The world seemed to hold its breath, waiting for the dawn of a new day. And in that moment of perfect stillness, all was well.</p>
+                    </div>
+                    
+                    <div class="text-center">
+                        <div class="spinner-border text-primary mb-2" role="status" id="processing-spinner" style="display:none;">
+                            <span class="visually-hidden">Processing...</span>
+                        </div>
+                        <div id="time-remaining" class="mb-3">Time remaining: 60 seconds</div>
+                        <button id="complete-reading" class="btn btn-success" disabled>Complete Reading Test</button>
+                    </div>
+                </div>
+                
+                <div id="processing" class="text-center" style="display:none;">
+                    <h3>Analyzing Your Eye Movements</h3>
+                    <div class="spinner-border text-primary my-4" role="status">
+                        <span class="visually-hidden">Processing...</span>
+                    </div>
+                    <p>Please wait while our system analyzes your eye movement patterns.</p>
+                    <div class="progress mt-3">
+                        <div id="analysis-progress" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="text-center">
+            <a href="{{ url_for('home') }}" class="btn btn-outline-secondary me-2">Cancel Assessment</a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.11.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/face-landmarks-detection@0.0.3/dist/face-landmarks-detection.js"></script>
+    
+    <script>
+        // Eye tracking variables
+        let webcamElement = document.getElementById('webcam');
+        let model;
+        let eyeTrackingData = [];
+        let calibrationPoints = [];
+        let readingStartTime;
+        let readingEndTime;
+        let timerInterval;
+        let secondsRemaining = 60;
+        
+        // Step buttons
+        const startSetupBtn = document.getElementById('start-setup');
+        const startCalibrationBtn = document.getElementById('start-calibration');
+        const completeReadingBtn = document.getElementById('complete-reading');
+        
+        // Step containers
+        const setupInstructions = document.getElementById('setup-instructions');
+        const cameraSetup = document.getElementById('camera-setup');
+        const calibrationSection = document.getElementById('calibration');
+        const readingTestContainer = document.getElementById('reading-test-container');
+        const processingSection = document.getElementById('processing');
+        
+        // Event listeners
+        startSetupBtn.addEventListener('click', startCameraSetup);
+        startCalibrationBtn.addEventListener('click', startCalibration);
+        completeReadingBtn.addEventListener('click', completeReadingTest);
+        
+        // Start camera setup
+        async function startCameraSetup() {
+            setupInstructions.style.display = 'none';
+            cameraSetup.style.display = 'block';
+            
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { 
+                        width: 640, 
+                        height: 480,
+                        facingMode: 'user'
+                    }
+                });
+                
+                webcamElement.srcObject = stream;
+                
+                // Load face landmarks model
+                model = await faceLandmarksDetection.load(
+                    faceLandmarksDetection.SupportedPackages.mediapipeFacemesh,
+                    { maxFaces: 1 }
+                );
+                
+                // Start face detection
+                startFaceDetection();
+                
+            } catch (error) {
+                console.error('Error accessing webcam:', error);
+                alert('Unable to access webcam. Please ensure you have granted camera permissions and try again.');
+                setupInstructions.style.display = 'block';
+                cameraSetup.style.display = 'none';
+            }
+        }
+        
+        // Start face detection loop
+        async function startFaceDetection() {
+            const detectFace = async () => {
+                if (webcamElement.readyState === 4) {
+                    const predictions = await model.estimateFaces({
+                        input: webcamElement
+                    });
+                    
+                    if (predictions.length > 0) {
+                        // Face detected - enable calibration button
+                        startCalibrationBtn.disabled = false;
+                        document.getElementById('calibration-instruction').textContent = 'Face detected! Click "Begin Calibration" to continue';
+                        
+                        // Get eye landmarks (simplified)
+                        const face = predictions[0];
+                        
+                        // Clear previous markers
+                        const markersContainer = document.getElementById('markers');
+                        markersContainer.innerHTML = '';
+                        
+                        // Draw eye markers
+                        const leftEye = face.scaledMesh[133]; // Approximate left eye center
+                        const rightEye = face.scaledMesh[362]; // Approximate right eye center
+                        
+                        if (leftEye && rightEye) {
+                            // Store eye positions for tracking
+                            const eyeData = {
+                                timestamp: Date.now(),
+                                leftEyeX: leftEye[0],
+                                leftEyeY: leftEye[1],
+                                rightEyeX: rightEye[0],
+                                rightEyeY: rightEye[1]
+                            };
+                            
+                            eyeTrackingData.push(eyeData);
+                            
+                            // Create markers (visual indicators)
+                            const leftMarker = document.createElement('div');
+                            leftMarker.style.position = 'absolute';
+                            leftMarker.style.left = `${leftEye[0]}px`;
+                            leftMarker.style.top = `${leftEye[1]}px`;
+                            leftMarker.style.width = '10px';
+                            leftMarker.style.height = '10px';
+                            leftMarker.style.backgroundColor = 'rgba(0, 255, 0, 0.7)';
+                            leftMarker.style.borderRadius = '50%';
+                            markersContainer.appendChild(leftMarker);
+                            
+                            const rightMarker = document.createElement('div');
+                            rightMarker.style.position = 'absolute';
+                            rightMarker.style.left = `${rightEye[0]}px`;
+                            rightMarker.style.top = `${rightEye[1]}px`;
+                            rightMarker.style.width = '10px';
+                            rightMarker.style.height = '10px';
+                            rightMarker.style.backgroundColor = 'rgba(0, 255, 0, 0.7)';
+                            rightMarker.style.borderRadius = '50%';
+                            markersContainer.appendChild(rightMarker);
+                        }
+                    } else {
+                        // No face detected - disable calibration button
+                        startCalibrationBtn.disabled = true;
+                        document.getElementById('calibration-instruction').textContent = 'No face detected. Please position yourself in front of the camera.';
+                    }
+                }
+                
+                // Continue detection loop if not in reading test
+                if (!readingStartTime) {
+                    requestAnimationFrame(detectFace);
+                }
+            };
+            
+            detectFace();
+        }
+        
+        // Start calibration process
+        function startCalibration() {
+            cameraSetup.style.display = 'none';
+            calibrationSection.style.display = 'block';
+            
+            const point = document.getElementById('calibration-point');
+            const progressBar = document.getElementById('calibration-progress');
+            const calibrationArea = document.getElementById('calibration-area');
+            const width = calibrationArea.offsetWidth;
+            const height = calibrationArea.offsetHeight;
+            
+            // Define calibration points (9-point calibration)
+            const positions = [
+                { x: 50, y: 50 },    // center
+                { x: 20, y: 20 },    // top-left
+                { x: 50, y: 20 },    // top-center
+                { x: 80, y: 20 },    // top-right
+                { x: 20, y: 50 },    // middle-left
+                { x: 80, y: 50 },    // middle-right
+                { x: 20, y: 80 },    // bottom-left
+                { x: 50, y: 80 },    // bottom-center
+                { x: 80, y: 80 }     // bottom-right
+            ];
+            
+            let currentPoint = 0;
+            let totalPoints = positions.length;
+            
+            // Move to first position
+            point.style.left = `${positions[0].x}%`;
+            point.style.top = `${positions[0].y}%`;
+            
+            // Calibration interval
+            const calibrationInterval = setInterval(() => {
+                currentPoint++;
+                
+                // Update progress
+                const progress = (currentPoint / totalPoints) * 100;
+                progressBar.style.width = `${progress}%`;
+                progressBar.setAttribute('aria-valuenow', progress);
+                progressBar.textContent = `${Math.round(progress)}%`;
+                
+                if (currentPoint >= totalPoints) {
+                    // Calibration complete
+                    clearInterval(calibrationInterval);
+                    calibrationSection.style.display = 'none';
+                    startReadingTest();
+                } else {
+                    // Move to next position
+                    point.style.left = `${positions[currentPoint].x}%`;
+                    point.style.top = `${positions[currentPoint].y}%`;
+                    
+                    // Record eye position for this calibration point
+                    // (In a real implementation, you'd average several readings)
+                    if (eyeTrackingData.length > 0) {
+                        const lastReading = eyeTrackingData[eyeTrackingData.length - 1];
+                        calibrationPoints.push({
+                            screenX: positions[currentPoint - 1].x / 100 * width,
+                            screenY: positions[currentPoint - 1].y / 100 * height,
+                            leftEyeX: lastReading.leftEyeX,
+                            leftEyeY: lastReading.leftEyeY,
+                            rightEyeX: lastReading.rightEyeX,
+                            rightEyeY: lastReading.rightEyeY
+                        });
+                    }
+                }
+            }, 2000); // Each point displayed for 2 seconds
+        }
+        
+        // Start reading test
+        function startReadingTest() {
+            readingTestContainer.style.display = 'block';
+            readingStartTime = Date.now();
+            
+            // Reset eye tracking data for the reading part
+            eyeTrackingData = [];
+            
+            // Start tracking eyes during reading
+            trackEyesDuringReading();
+            
+            // Start countdown timer
+            timerInterval = setInterval(() => {
+                secondsRemaining--;
+                document.getElementById('time-remaining').textContent = `Time remaining: ${secondsRemaining} seconds`;
+                
+                if (secondsRemaining <= 0) {
+                    clearInterval(timerInterval);
+                    completeReadingBtn.disabled = false;
+                    document.getElementById('time-remaining').textContent = 'Time\'s up! Please click "Complete Reading Test"';
+                }
+            }, 1000);
+            
+            // Enable complete button after minimum time (30 seconds)
+            setTimeout(() => {
+                completeReadingBtn.disabled = false;
+            }, 30000);
+        }
+        
+        // Track eyes during reading
+        async function trackEyesDuringReading() {
+            const readingElement = document.getElementById('reading-test');
+            const readingRect = readingElement.getBoundingClientRect();
+            
+            const trackReading = async () => {
+                if (readingStartTime && !readingEndTime) {
+                    try {
+                        const predictions = await model.estimateFaces({
+                            input: webcamElement
+                        });
+                        
+                        if (predictions.length > 0) {
+                            const face = predictions[0];
+                            const leftEye = face.scaledMesh[133];
+                            const rightEye = face.scaledMesh[362];
+                            
+                            if (leftEye && rightEye) {
+                                // Record eye positions relative to the reading text
+                                const eyeData = {
+                                    timestamp: Date.now(),
+                                    leftEyeX: leftEye[0],
+                                    leftEyeY: leftEye[1],
+                                    rightEyeX: rightEye[0],
+                                    rightEyeY: rightEye[1],
+                                    textTop: readingRect.top,
+                                    textBottom: readingRect.bottom,
+                                    textLeft: readingRect.left,
+                                    textRight: readingRect.right
+                                };
+                                
+                                eyeTrackingData.push(eyeData);
+                            }
+                        }
+                        
+                        // Continue tracking
+                        requestAnimationFrame(trackReading);
+                    } catch (error) {
+                        console.error('Error tracking eyes during reading:', error);
+                    }
+                }
+            };
+            
+            trackReading();
+        }
+        
+        // Complete reading test
+        function completeReadingTest() {
+            readingEndTime = Date.now();
+            clearInterval(timerInterval);
+            
+            // Show processing section
+            readingTestContainer.style.display = 'none';
+            processingSection.style.display = 'block';
+            
+            // Process recorded eye tracking data
+            processEyeTrackingData();
+        }
+        
+        // Process eye tracking data and send to server
+        async function processEyeTrackingData() {
+            // Simulated analysis progress
+            const progressBar = document.getElementById('analysis-progress');
+            let progress = 0;
+            
+            const progressInterval = setInterval(() => {
+                progress += 5;
+                progressBar.style.width = `${progress}%`;
+                progressBar.setAttribute('aria-valuenow', progress);
+                progressBar.textContent = `${progress}%`;
+                
+                if (progress >= 100) {
+                    clearInterval(progressInterval);
+                    sendDataToServer();
+                }
+            }, 200);
+        }
+        
+        // Send data to server
+        async function sendDataToServer() {
+            // Prepare data for analysis
+            const analysisData = {
+                eyeTrackingData: eyeTrackingData,
+                calibrationPoints: calibrationPoints,
+                readingDuration: readingEndTime - readingStartTime,
+                timestamp: new Date().toISOString()
+            };
+            
+            try {
+                const response = await fetch('/api/save-eye-tracking', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(analysisData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success && result.redirect) {
+                    window.location.href = result.redirect;
+                } else {
+                    console.error('Error saving eye tracking data:', result.error);
+                    alert('An error occurred while analyzing eye tracking data. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error sending data to server:', error);
+                alert('An error occurred while sending data to the server. Please try again.');
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Handwriting Analysis - DyslexiaDetect</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .steps-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+        
+        .step {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            position: relative;
+        }
+        
+        .step.active {
+            font-weight: bold;
+            color: #0d6efd;
+        }
+        
+        .step:not(:last-child):after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            right: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #dee2e6;
+            transform: translateY(-50%);
+            z-index: -1;
+        }
+        
+        .step-number {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            line-height: 30px;
+            text-align: center;
+            border-radius: 50%;
+            background-color: #e9ecef;
+            margin-bottom: 5px;
+        }
+        
+        .step.active .step-number {
+            background-color: #0d6efd;
+            color: white;
+        }
+        
+        .upload-area {
+            border: 2px dashed #ced4da;
+            border-radius: 5px;
+            padding: 2rem;
+            text-align: center;
+            background-color: #f8f9fa;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .upload-area:hover {
+            background-color: #e9ecef;
+        }
+        
+        .upload-area.highlight {
+            border-color: #0d6efd;
+            background-color: rgba(13, 110, 253, 0.1);
+        }
+        
+        .handwriting-sample {
+            max-width: 100%;
+            margin-top: 15px;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .handwriting-instructions {
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .sample-sentence {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            font-size: 1.2rem;
+            padding: 10px;
+            margin: 10px 0;
+            background-color: #fff;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .analysis-preview {
+            background-color: #e9f7ef;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 20px;
+            border: 1px solid #d1e7dd;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('home') }}">DyslexiaDetect</a>
+            <div class="ms-auto">
+                <span class="navbar-text text-white">
+                    Step 2 of 3: Handwriting Analysis
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-5">
+        <div class="steps-indicator">
+            <div class="step">
+                <div class="step-number">1</div>
+                <div>Eye Tracking</div>
+            </div>
+            <div class="step active">
+                <div class="step-number">2</div>
+                <div>Handwriting</div>
+            </div>
+            <div class="step">
+                <div class="step-number">3</div>
+                <div>Speech</div>
+            </div>
+            <div class="step">
+                <div class="step-number">4</div>
+                <div>Results</div>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h1 class="card-title text-center mb-4">Handwriting Analysis</h1>
+                
+                <div class="handwriting-instructions">
+                    <h3>Instructions:</h3>
+                    <ol>
+                        <li>Write the following sentence on a white paper with a dark pen:</li>
+                        <div class="sample-sentence">
+                            "The quick brown fox jumps over the lazy dog."
+                        </div>
+                        <li>Take a clear photo or scan of your handwriting</li>
+                        <li>Upload the image using the form below</li>
+                    </ol>
+                    <div class="mt-3">
+                        <p><strong>Note:</strong> For best results, ensure your handwriting is clearly visible with good lighting and minimal background distractions.</p>
+                    </div>
+                </div>
+                
+                <!-- Form for handwriting upload -->
+                <div id="handwriting-upload-section">
+                    <div class="upload-area" id="drop-area">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" fill="currentColor" class="bi bi-cloud-arrow-up text-primary mb-3" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M7.646 5.146a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 6.707V10.5a.5.5 0 0 1-1 0V6.707L6.354 7.854a.5.5 0 1 1-.708-.708l2-2z"/>
+                            <path d="M4.406 3.342A5.53 5.53 0 0 1 8 2c2.69 0 4.923 2 5.166 4.579C14.758 6.804 16 8.137 16 9.773 16 11.569 14.502 13 12.687 13H3.781C1.708 13 0 11.366 0 9.318c0-1.763 1.266-3.223 2.942-3.593.143-.863.698-1.723 1.464-2.383zm.653.757c-.757.653-1.153 1.44-1.153 2.056v.448l-.445.049C2.064 6.805 1 7.952 1 9.318 1 10.785 2.23 12 3.781 12h8.906C13.98 12 15 10.988 15 9.773c0-1.216-1.02-2.228-2.313-2.228h-.5v-.5C12.188 4.825 10.328 3 8 3a4.53 4.53 0 0 0-2.941 1.1z"/>
+                        </svg>
+                        <h4>Drop your handwriting image here</h4>
+                        <p>or</p>
+                        <label for="handwritingUpload" class="btn btn-primary">Select File</label>
+                        <input type="file" id="handwritingUpload" name="handwriting_sample" accept="image/*" style="display: none;">
+                        <p class="text-muted mt-2">Supported formats: JPG, PNG, JPEG</p>
+                    </div>
+                    
+                    <div id="previewContainer" class="text-center mt-4" style="display: none;"></div>
+                    
+                    <div class="text-center mt-4">
+                        <p id="statusText" class="text-info"></p>
+                        
+                        <button type="button" id="uploadButton" class="btn btn-success" disabled>
+                            Analyze Handwriting
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="processing" class="text-center mt-4" style="display: none;">
+                    <h3>Analyzing Your Handwriting</h3>
+                    <div class="spinner-border text-primary my-4" role="status">
+                        <span class="visually-hidden">Processing...</span>
+                    </div>
+                    <p>Please wait while our system analyzes your handwriting patterns.</p>
+                    <div class="progress mt-3">
+                        <div id="analysis-progress" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                    </div>
+                </div>
+                
+                <!-- Container for next button -->
+                <div class="text-center mt-4">
+                    <button id="nextButton" class="btn btn-primary" disabled>
+                        Continue to Speech Analysis
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="text-center">
+            <a href="{{ url_for('home') }}" class="btn btn-outline-secondary me-2">Cancel Assessment</a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/handwriting.js') }}"></script>
+</body>
+</html>
