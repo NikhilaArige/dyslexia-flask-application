@@ -18,33 +18,6 @@ This project is a web-based dyslexia assessment tool that uses AI to analyze a u
 - 📊 Results Page  
   Provides a final score and recommendation based on all three inputs.
 
----
-
-## 📁 Folder Structure
-
-project-root/
-├── app.py # Main Flask application
-├── dyslexia_audio_processing.py # Audio model (training + inference)
-├── Eye_movement_training.py # Eye model training script
-├── models/
-│ ├── eye_movement_trained.h5
-│ ├── audio_model.pkl
-│ ├── audio_scaler.pkl
-│ └── handwriting_model.h5 OR handwriting_dyslexia_model.pkl
-├── templates/
-│ ├── index.html
-│ ├── eye_tracking.html
-│ ├── handwriting.html
-│ ├── audio.html
-│ ├── results.html
-│ ├── about.html
-│ └── how_it_works.html
-├── static/ # Optional: CSS, JS, Images
-├── uploads/ # Temporary uploaded files (excluded in .gitignore)
-├── requirements.txt
-└── README.md
-
----
 
 ## 🚀 How to Run the Project
 
